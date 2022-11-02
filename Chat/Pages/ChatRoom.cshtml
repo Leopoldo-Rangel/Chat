@@ -1,0 +1,41 @@
+﻿@page
+@model Chat.Pages.ChatRoomModel
+
+@Html.AntiForgeryToken()
+<div class="container">
+    <div class="row">&nbsp;</div>
+    <div class="row">
+        <div class="col-2">Message</div>
+        <div class="col-4"><input type="text" id="messageInput" /></div>
+    </div>
+    <div class="row">&nbsp;</div>
+    <div class="row">
+        <div class="col-6">
+            <input type="button" maxlength="500" id="sendButton" value="Send Message" />
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <hr />
+    </div>
+</div>
+<div class="row">
+    <div class="col-6" style="height: 400px; overflow: scroll">
+        <ul id="messagesList">
+            @foreach (var message in Model.ChatRoomMessages)
+            {
+                <li>@(message.UserName + " says: " + message.Message)</li>
+            }
+        </ul>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/signalr/dist/browser/signalr.js"></script>
+    <script type="text/javascript">
+    var chatGroupId = '@Model.ChatRoomId'
+    </script>
+    <script src="~/js/chat.js"></script>
+}
+

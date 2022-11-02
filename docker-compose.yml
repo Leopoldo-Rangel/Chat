@@ -1,0 +1,54 @@
+version: '3.4'
+
+services:
+
+  database:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sqlserver2019
+    ports:
+        - 1433:1433
+    environment:
+        ACCEPT_EULA: Y
+        SA_PASSWORD: Pass123$
+        MSSQL_PID: Express
+    volumes:
+      - ./data:/var/opt/mssql/data
+      - ./log:/var/opt/mssql/log
+      - ./secrets:/var/opt/mssql/secrets
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+
+  identity:
+    image: ${DOCKER_REGISTRY-}identity
+    depends_on:
+      - "database"
+    build:
+      context: .
+      dockerfile: Identity/Dockerfile
+
+  chat.api:
+    image: ${DOCKER_REGISTRY-}chatapi
+    build:
+      context: .
+      dockerfile: Chat.API/Dockerfile
+
+  quote.worker:
+    image: ${DOCKER_REGISTRY-}quoteworker
+    build:
+      context: .
+      dockerfile: Quote.Worker/Dockerfile
+
+  chat:
+    image: ${DOCKER_REGISTRY-}chat
+    build:
+      context: .
+      dockerfile: Chat/Dockerfile
+
