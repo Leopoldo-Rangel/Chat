@@ -12,9 +12,9 @@ services:
         SA_PASSWORD: Pass123$
         MSSQL_PID: Express
     volumes:
-      - ./data:/var/opt/mssql/data
-      - ./log:/var/opt/mssql/log
-      - ./secrets:/var/opt/mssql/secrets
+      - ~/.docker-conf/sqlserver/data:/var/opt/mssql/data
+      - ~/.docker-conf/sqlserver/log:/var/opt/mssql/log
+      - ~/.docker-conf/sqlserver/secrets:/var/opt/mssql/secrets
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
