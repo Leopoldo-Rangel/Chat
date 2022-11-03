@@ -1,6 +1,7 @@
 ﻿using Chat.API.Database;
 using Chat.API.Hubs;
 using Chat.Shared.BrokerContracts;
+using Chat.Shared.Helpers;
 using MassTransit;
 using Microsoft.AspNetCore.SignalR;
 
@@ -20,23 +21,25 @@ namespace Chat.API.Consumers
 
         public async Task Consume(ConsumeContext<IQuoteMessageResponse> context)
         {
+            var currentDate = DateTime.Now;
             if (context.Message.Success)
             {
-                _dbContext.ChatRoomMessage.Add(new ChatRoomMessage
+                var dbRecord = new ChatRoomMessage
                 {
                     ChatRoomId = context.Message.ChatRoomId,
                     UserName = "Quote Bot",
-                    Created = DateTime.Now,
+                    Created = currentDate,
                     Message = context.Message.Quote
-                });
+                };
 
+                _dbContext.ChatRoomMessage.Add(dbRecord);
                 await _dbContext.SaveChangesAsync();
             }
 
+            var message = ChatMessageBuilder.FormatMessage(
+                context.Message.Success ? context.Message.Quote : context.Message.Error, currentDate, true);
             await _hubContext.Clients.Groups(context.Message.ChatRoomId.ToString())
-                .SendAsync("ReceiveMessage", context.Message.Success
-                    ? $"Quote Bot says: {context.Message.Quote}"
-                    : $"Quote Bot says: {context.Message.Error}");
+                .SendAsync("ReceiveMessage", message);
         }
     }
 }

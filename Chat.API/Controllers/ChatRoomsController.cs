@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using Chat.Shared.Helpers;
 
 namespace Chat.API.Controllers
 {
@@ -81,23 +82,24 @@ namespace Chat.API.Controllers
         }
 
         [HttpPost("{chatRoomId:int}/[action]")]
-        public async Task<IActionResult> SendMessage([FromBody]SendMessageToChatRequestDto dto,
+        public async Task<IActionResult> SendMessage([FromBody] SendMessageToChatRequestDto dto,
             [FromRoute] int chatRoomId)
         {
             if (dto.Message.ToLower().StartsWith("/stock"))
             {
-                var stockRequestParts = dto.Message.Split("=");
+                var stockRequestParts = dto.Message.Split("=", StringSplitOptions.RemoveEmptyEntries);
                 if (stockRequestParts.Length != 2)
                 {
-                    await _hubContext.Clients.Groups(chatRoomId.ToString())
-                        .SendAsync("ReceiveMessage", $"Quote Bot says: {dto.Message}");
-                    return BadRequest(new {Error  =  "Bad request, stock instruction is missing stock name"});
+                    var error = "Bad request, stock instruction is missing stock name";
+                    var errorMessage = ChatMessageBuilder.FormatMessage(error, DateTime.Now, true);
+                    await _hubContext.Clients.Groups(chatRoomId.ToString()).SendAsync("ReceiveMessage", errorMessage);
+                    return BadRequest(new { Error = error });
                 }
 
                 var stockName = stockRequestParts[1].Trim();
-                await _hubContext.Clients.Groups(chatRoomId.ToString())
-                    .SendAsync("ReceiveMessage",
-                        $"Quote Bot says: Petition to quote stock {stockName} received, processing...");
+                var successMessage = ChatMessageBuilder.FormatMessage(
+                    $"Petition to quote stock {stockName} received, processing...", DateTime.Now, true);
+                await _hubContext.Clients.Groups(chatRoomId.ToString()).SendAsync("ReceiveMessage", successMessage);
                 await _sendEndpointProvider.Send<IAddQuoteMessage>(new
                 {
                     StockName = stockName,
@@ -115,8 +117,8 @@ namespace Chat.API.Controllers
             _context.ChatRoomMessage.Add(record);
             await _context.SaveChangesAsync();
 
-            await _hubContext.Clients.Groups(chatRoomId.ToString())
-                .SendAsync("ReceiveMessage", $"{userName} says: {dto.Message}");
+            var message = ChatMessageBuilder.FormatMessage(dto.Message, record.Created, false, record.UserName);
+            await _hubContext.Clients.Groups(chatRoomId.ToString()).SendAsync("ReceiveMessage", message);
             return Ok();
         }
     }

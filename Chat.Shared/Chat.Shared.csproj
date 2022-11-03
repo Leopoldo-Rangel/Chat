@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="BrokerContracts\IAddQuoteMessage.cs" />
     <Compile Include="BrokerContracts\IQuoteMessageResponse.cs" />
+    <Compile Include="Helpers\ChatMessageBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />
